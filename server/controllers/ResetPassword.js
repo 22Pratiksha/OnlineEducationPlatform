@@ -2,50 +2,57 @@ const User = require("../models/User")
 const mailSender = require("../utils/mailSender")
 const bcrypt = require("bcrypt")
 const crypto = require("crypto")
+const User = require("../models/User");
+const mailSender = require("../utils/mailSender");
+const bcrypt = require("bcrypt");
+const crypto = require("crypto");
+
 exports.resetPasswordToken = async (req, res) => {
   try {
-    const email = req.body.email
-    const user = await User.findOne({ email: email })
+    const email = req.body.email;
+    const user = await User.findOne({ email: email });
     if (!user) {
       return res.json({
         success: false,
-        message: `This Email: ${email} is not Registered With Us Enter a Valid Email `,
-      })
+        message: `This Email: ${email} is not registered with us. Enter a valid email.`,
+      });
     }
-    const token = crypto.randomBytes(20).toString("hex")
+
+    const token = crypto.randomBytes(20).toString("hex");
 
     const updatedDetails = await User.findOneAndUpdate(
       { email: email },
       {
         token: token,
-        resetPasswordExpires: Date.now() + 3600000,
+        resetPasswordExpires: Date.now() + 3600000, // 1 hour
       },
       { new: true }
-    )
-    console.log("DETAILS", updatedDetails)
+    );
 
-    const url = `http://localhost:3000/update-password/${token}`
-    // const url = `https://studynotion-edtech-project.vercel.app/update-password/${token}`
+    console.log("DETAILS", updatedDetails);
+
+    // ✅ Updated reset link with your Vercel URL
+    const url = `https://online-education-platform-theta.vercel.app/update-password/${token}`;
 
     await mailSender(
       email,
       "Password Reset",
-      `Your Link for email verification is ${url}. Please click this url to reset your password.`
-    )
+      `Your link to reset your password is: ${url} \n\nIf you did not request this, please ignore this email.`
+    );
 
     res.json({
       success: true,
       message:
-        "Email Sent Successfully, Please Check Your Email to Continue Further",
-    })
+        "Email sent successfully. Please check your inbox to continue.",
+    });
   } catch (error) {
     return res.json({
       error: error.message,
       success: false,
-      message: `Some Error in Sending the Reset Message`,
-    })
+      message: `An error occurred while sending the reset email.`,
+    });
   }
-}
+};
 
 exports.resetPassword = async (req, res) => {
   try {
